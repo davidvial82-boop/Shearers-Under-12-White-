@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Under 12s — Coaching Hub</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --surface2: #f0f1f4;
+    --border: rgba(0,0,0,0.1);
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --navy: #1a1a2e;
+    --green-bg: #EAF3DE; --green-txt: #3B6D11;
+    --amber-bg: #FAEEDA; --amber-txt: #854F0B;
+    --blue-bg:  #E6F1FB; --blue-txt:  #185FA5;
+    --red-bg:   #FCEBEB; --red-txt:   #A32D2D;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f0f1a;
+      --surface: #1c1c2e;
+      --surface2: #252538;
+      --border: rgba(255,255,255,0.1);
+      --text: #e8e9f0;
+      --muted: #9ca3af;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .app { max-width: 480px; margin: 0 auto; padding: 12px 12px 80px; }
+  .header { background: var(--navy); color: #fff; border-radius: var(--radius); padding: 18px 16px; margin-bottom: 12px; text-align: center; }
+  .header h1 { font-size: 20px; font-weight: 600; letter-spacing: .3px; }
+  .header p { font-size: 12px; opacity: .65; margin-top: 4px; }
+  .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; z-index: 100; }
+  .tab-btn { flex: 1; padding: 10px 4px 14px; border: none; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--muted); font-size: 10px; font-weight: 500; transition: color .15s; }
+  .tab-btn.active { color: var(--navy); }
+  .tab-btn svg { width: 22px; height: 22px; }
+  @media (prefers-color-scheme: dark) { .tab-btn.active { color: #a78bfa; } }
+  .section { display: none; }
+  .section.active { display: block; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+  .card-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 12px; }
+  select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface); color: var(--text); margin-bottom: 12px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+  .player-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .player-row:last-child { border-bottom: none; }
+  .num { width: 26px; height: 26px; border-radius: 50%; background: var(--navy); color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .player-info { flex: 1; min-width: 0; }
+  .player-name { font-size: 15px; font-weight: 500; }
+  .player-sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .att-btn { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--surface2); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .15s; font-weight: 600; color: var(--muted); }
+  .att-btn.present { background: var(--green-bg); border-color: #639922; color: var(--green-txt); }
+  .att-btn.absent  { background: var(--red-bg);   border-color: #E24B4A; color: var(--red-txt); }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+  .b-green { background: var(--green-bg); color: var(--green-txt); }
+  .b-amber { background: var(--amber-bg); color: var(--amber-txt); }
+  .b-blue  { background: var(--blue-bg);  color: var(--blue-txt); }
+  .b-red   { background: var(--red-bg);   color: var(--red-txt); }
+  .day-pill { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 600; margin-right: 5px; }
+  .tue { background: var(--blue-bg); color: var(--blue-txt); }
+  .thu { background: var(--green-bg); color: var(--green-txt); }
+  .lp-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .lp-row:last-child { border-bottom: none; }
+  .lp-pos { color: var(--muted); flex: 1; }
+  .lp-name { font-weight: 600; font-size: 14px; }
+  .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .rule-item { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 10px; text-align: center; }
+  .rule-icon { font-size: 22px; margin-bottom: 4px; }
+  .rule-lbl { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .rule-val { font-size: 13px; font-weight: 600; margin-top: 3px; }
+  .rule-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 10px; }
+  textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface); color: var(--text); resize: vertical; min-height: 80px; font-family: inherit; }
+  .btn-primary { width: 100%; padding: 12px; background: var(--navy); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+  .btn-primary:active { opacity: .85; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-lbl { color: var(--muted); }
+  .att-summary { display: flex; gap: 10px; margin-bottom: 12px; }
+  .att-stat { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+  .att-stat .big { font-size: 24px; font-weight: 700; }
+  .att-stat .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 200; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+  .prev-note { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .prev-note:last-child { border-bottom: none; }
+  .prev-note-date { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+  .prev-note-text { font-size: 13px; line-height: 1.5; }
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 16px; padding: 2px 6px; float: right; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>Under 12s — Coaching Hub</h1>
+    <p>Season 2026 · Gold Coast</p>
+  </div>
+
+  <div id="sec-squad" class="section active">
+    <div class="card">
+      <div class="card-title">Select game date</div>
+      <select id="gameDate" onchange="changeGameDate()">
+        <option value="Apr18">Sat 18 Apr</option>
+        <option value="Apr25">Sat 25 Apr</option>
+        <option value="May2">Sat 2 May</option>
+        <option value="May9">Sat 9 May</option>
+        <option value="May16">Sat 16 May</option>
+        <option value="May23">Sat 23 May</option>
+        <option value="May30">Sat 30 May</option>
+        <option value="Jun6">Sat 6 Jun</option>
+        <option value="Jun13">Sat 13 Jun</option>
+        <option value="Jun20">Sat 20 Jun</option>
+        <option value="Jun27">Sat 27 Jun</option>
+        <option value="Jul4">Sat 4 Jul</option>
+        <option value="Jul11">Sat 11 Jul</option>
+        <option value="Jul18">Sat 18 Jul</option>
+        <option value="Jul25">Sat 25 Jul</option>
+      </select>
+    </div>
+    <div class="att-summary">
+      <div class="att-stat"><div class="big" id="cntPresent" style="color:var(--green-txt)">0</div><div class="lbl">Present</div></div>
+      <div class="att-stat"><div class="big" id="cntAbsent" style="color:var(--red-txt)">0</div><div class="lbl">Absent</div></div>
+      <div class="att-stat"><div class="big" id="cntUnknown" style="color:var(--muted)">18</div><div class="lbl">Unknown</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Tap to mark attendance</div>
+      <div id="playerList"></div>
+    </div>
+  </div>
+
+  <div id="sec-lineup" class="section">
+    <div class="card">
+      <div class="card-title">Starters — 1 to 13</div>
+      <div id="lineupStarters"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Interchange / Reserves</div>
+      <div id="lineupReserves"></div>
+    </div>
+  </div>
+
+  <div id="sec-training" class="section">
+    <div class="card">
+      <div class="card-title">Training session notes</div>
+      <select id="trainDate">
+        <optgroup label="April">
+          <option>Thu 17 Apr</option><option>Tue 22 Apr</option>
+          <option>Thu 24 Apr</option><option>Tue 29 Apr</option>
+        </optgroup>
+        <optgroup label="May">
+          <option>Thu 1 May</option><option>Tue 6 May</option>
+          <option>Thu 8 May</option><option>Tue 13 May</option>
+          <option>Thu 15 May</option><option>Tue 20 May</option>
+          <option>Thu 22 May</option><option>Tue 27 May</option>
+          <option>Thu 29 May</option>
+        </optgroup>
+        <optgroup label="June">
+          <option>Tue 3 Jun</option><option>Thu 5 Jun</option>
+          <option>Tue 10 Jun</option><option>Thu 12 Jun</option>
+          <option>Tue 17 Jun</option><option>Thu 19 Jun</option>
+          <option>Tue 24 Jun</option><option>Thu 26 Jun</option>
+        </optgroup>
+        <optgroup label="July">
+          <option>Tue 1 Jul</option><option>Thu 3 Jul</option>
+          <option>Tue 8 Jul</option><option>Thu 10 Jul</option>
+          <option>Tue 15 Jul</option><option>Thu 17 Jul</option>
+          <option>Tue 22 Jul</option><option>Thu 24 Jul</option>
+        </optgroup>
+      </select>
+      <textarea id="sessionNote" placeholder="Drills covered, focus areas, things to work on next session..."></textarea>
+      <button class="btn-primary" onclick="saveNote()">Save session notes</button>
+    </div>
+    <div class="card" id="prevNotesCard" style="display:none">
+      <div class="card-title">Saved notes</div>
+      <div id="prevNotes"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Player development flags</div>
+      <div class="stat-row"><span class="stat-lbl">SJ</span><span class="badge b-red">Injured — monitor return</span></div>
+      <div class="stat-row"><span class="stat-lbl">Carter</span><span class="badge b-amber">Position needs clarifying</span></div>
+      <div class="stat-row"><span class="stat-lbl">Ryaln</span><span class="badge b-amber">Position needs clarifying</span></div>
+    </div>
+  </div>
+
+  <div id="sec-rules" class="section">
+    <div class="card">
+      <div class="card-title">Under 12s — game rules</div>
+      <div class="rule-grid">
+        <div class="rule-item"><div class="rule-icon">⏱</div><div class="rule-lbl">Game time</div><div class="rule-val">20 min × 2</div></div>
+        <div class="rule-item"><div class="rule-icon">👕</div><div class="rule-lbl">Players per team</div><div class="rule-val">13</div></div>
+        <div class="rule-item"><div class="rule-icon">📏</div><div class="rule-lbl">Field size</div><div class="rule-val">100 × 68m</div></div>
+        <div class="rule-item"><div class="rule-icon">✋</div><div class="rule-lbl">Tackles</div><div class="rule-val">6</div></div>
+        <div class="rule-item"><div class="rule-icon">🔄</div><div class="rule-lbl">Restart</div><div class="rule-val">Tap on halfway</div></div>
+        <div class="rule-item"><div class="rule-icon">🏉</div><div class="rule-lbl">Pass minimum</div><div class="rule-val">2 passes</div></div>
+        <div class="rule-item"><div class="rule-icon">🚫</div><div class="rule-lbl">Scrums</div><div class="rule-val">No scrums</div></div>
+        <div class="rule-item"><div class="rule-icon">🦵</div><div class="rule-lbl">Kicking</div><div class="rule-val">General play only</div></div>
+        <div class="rule-item"><div class="rule-icon">🙋</div><div class="rule-lbl">Defenders</div><div class="rule-val">Stand back 5m</div></div>
+        <div class="rule-item"><div class="rule-icon">🏆</div><div class="rule-lbl">Conversions</div><div class="rule-val">Allowed</div></div>
+      </div>
+      <p class="rule-note">No bombs · 1 marker only · Kicking in general play (no bombs)</p>
+    </div>
+  </div>
+</div>
+
+<nav class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('squad',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Squad
+  </button>
+  <button class="tab-btn" onclick="showTab('lineup',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="17" width="18" height="3" rx="1"/></svg>Lineup
+  </button>
+  <button class="tab-btn" onclick="showTab('training',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Training
+  </button>
+  <button class="tab-btn" onclick="showTab('rules',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Rules
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PLAYERS=[
+  {num:1,name:"Heath",pos:"Fullback",pref1:"Fullback",pref2:"Five Eight",type:"starter"},
+  {num:2,name:"Max",pos:"Wing",pref1:"Wing",pref2:"Centre",type:"starter"},
+  {num:3,name:"Ezra",pos:"Centre",pref1:"Centre",pref2:"Second Row",type:"starter"},
+  {num:4,name:"Aaiden",pos:"Centre",pref1:"Centre",pref2:"",type:"starter"},
+  {num:5,name:"Lachlan",pos:"Wing",pref1:"Half Back",pref2:"",type:"starter"},
+  {num:6,name:"Caleb",pos:"Five Eight",pref1:"Half Back",pref2:"Five Eight",type:"starter"},
+  {num:7,name:"Nyxon",pos:"Half Back",pref1:"Half Back",pref2:"Five Eight",type:"starter"},
+  {num:8,name:"Soni",pos:"Front Row",pref1:"Front Row",pref2:"",type:"starter"},
+  {num:9,name:"Harry",pos:"Dummy Half",pref1:"Dummy Half",pref2:"Half Back",type:"starter"},
+  {num:10,name:"Carter",pos:"Front Row",pref1:"Unknown",pref2:"",type:"starter"},
+  {num:11,name:"Jake",pos:"Second Row",pref1:"Second Row",pref2:"Centre",type:"starter"},
+  {num:12,name:"Leon",pos:"Second Row",pref1:"Front Row",pref2:"Second Row",type:"starter"},
+  {num:13,name:"Cooper",pos:"Lock",pref1:"Lock",pref2:"Dummy Half",type:"starter"},
+  {num:14,name:"Tahj",pos:"Reserve Middle",pref1:"Front Row",pref2:"",type:"reserve"},
+  {num:15,name:"Jimmy",pos:"Reserve Middle",pref1:"",pref2:"",type:"reserve"},
+  {num:16,name:"Ryaln",pos:"Reserve Spine/Back",pref1:"",pref2:"",type:"reserve"},
+  {num:17,name:"Huy",pos:"Reserve Outside Back",pref1:"",pref2:"",type:"reserve"},
+  {num:18,name:"SJ",pos:"Injured",pref1:"",pref2:"",type:"injured"}
+];
+const ATT_KEY='u12_attendance', NOTE_KEY='u12_notes';
+let attendance=JSON.parse(localStorage.getItem(ATT_KEY)||'{}');
+let notes=JSON.parse(localStorage.getItem(NOTE_KEY)||'{}');
+function saveAtt(){localStorage.setItem(ATT_KEY,JSON.stringify(attendance));}
+function saveNotes(){localStorage.setItem(NOTE_KEY,JSON.stringify(notes));}
+function getDateKey(){return document.getElementById('gameDate').value;}
+function renderSquad(){
+  const dk=getDateKey();
+  if(!attendance[dk])attendance[dk]={};
+  const d=attendance[dk];
+  let p=0,a=0,u=0;
+  PLAYERS.forEach(pl=>{const s=d[pl.name]||'none';if(s==='present')p++;else if(s==='absent')a++;else u++;});
+  document.getElementById('cntPresent').textContent=p;
+  document.getElementById('cntAbsent').textContent=a;
+  document.getElementById('cntUnknown').textContent=u;
+  document.getElementById('playerList').innerHTML=PLAYERS.map(pl=>{
+    const s=d[pl.name]||'none';
+    const cls=s==='present'?'present':s==='absent'?'absent':'';
+    const icon=s==='present'?'✓':s==='absent'?'✗':'·';
+    const bc=pl.type==='reserve'?'b-amber':pl.type==='injured'?'b-red':'b-blue';
+    const sub=pl.pref1?'Prefers: '+pl.pref1+(pl.pref2?' / '+pl.pref2:''):'';
+    return `<div class="player-row">
+      <div class="num">${pl.num}</div>
+      <div class="player-info"><div class="player-name">${pl.name}</div>${sub?`<div class="player-sub">${sub}</div>`:''}</div>
+      <span class="badge ${bc}" style="font-size:10px">${pl.pos}</span>
+      <button class="att-btn ${cls}" onclick="toggleAtt('${pl.name}')">${icon}</button>
+    </div>`;
+  }).join('');
+}
+function toggleAtt(name){
+  const dk=getDateKey();
+  if(!attendance[dk])attendance[dk]={};
+  const cur=attendance[dk][name]||'none';
+  attendance[dk][name]=cur==='none'?'present':cur==='present'?'absent':'none';
+  saveAtt();renderSquad();
+}
+function changeGameDate(){renderSquad();}
+function renderLineup(){
+  document.getElementById('lineupStarters').innerHTML=PLAYERS.filter(p=>p.type==='starter').map(p=>`
+    <div class="lp-row"><div class="num" style="flex-shrink:0">${p.num}</div><span class="lp-pos">${p.pos}</span><span class="lp-name">${p.name}</span></div>`).join('');
+  document.getElementById('lineupReserves').innerHTML=PLAYERS.filter(p=>p.type!=='starter').map(p=>`
+    <div class="lp-row"><div class="num" style="flex-shrink:0;background:${p.type==='injured'?'#A32D2D':'#854F0B'}">${p.num}</div><span class="lp-pos">${p.pos}</span><span class="lp-name">${p.name}</span></div>`).join('');
+}
+function saveNote(){
+  const date=document.getElementById('trainDate').value;
+  const text=document.getElementById('sessionNote').value.trim();
+  if(!text){showToast('Nothing to save');return;}
+  notes[date]={text,saved:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'})};
+  saveNotes();document.getElementById('sessionNote').value='';
+  renderPrevNotes();showToast('Notes saved ✓');
+}
+function deleteNote(date){delete notes[date];saveNotes();renderPrevNotes();}
+function renderPrevNotes(){
+  const keys=Object.keys(notes);
+  const card=document.getElementById('prevNotesCard');
+  if(!keys.length){card.style.display='none';return;}
+  card.style.display='block';
+  document.getElementById('prevNotes').innerHTML=keys.reverse().map(k=>{
+    const isTue=k.startsWith('Tue');
+    const pill=`<span class="day-pill ${isTue?'tue':'thu'}">${isTue?'Tue':'Thu'}</span>`;
+    return `<div class="prev-note">
+      <div class="prev-note-date">${pill}${k.replace(/^(Tue|Thu) /,'')}
+        <button class="del-btn" onclick="deleteNote('${k}')">×</button>
+      </div>
+      <div class="prev-note-text">${notes[k].text}</div>
+    </div>`;
+  }).join('');
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+function showTab(name,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='lineup')renderLineup();
+  if(name==='training')renderPrevNotes();
+  window.scrollTo(0,0);
+}
+renderSquad();renderPrevNotes();
+</script>
+</body>
+</html>
