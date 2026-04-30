@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Shearers Under 12 White — Coaching Hub</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#f4f5f7;--surface:#fff;--surface2:#f0f1f4;--border:rgba(0,0,0,0.1);--text:#1a1a2e;--muted:#6b7280;--navy:#1a1a2e;--green-bg:#EAF3DE;--green-txt:#3B6D11;--amber-bg:#FAEEDA;--amber-txt:#854F0B;--blue-bg:#E6F1FB;--blue-txt:#185FA5;--red-bg:#FCEBEB;--red-txt:#A32D2D;--r:12px;--rs:8px}
 @media(prefers-color-scheme:dark){:root{--bg:#0f0f1a;--surface:#1c1c2e;--surface2:#252538;--border:rgba(255,255,255,0.1);--text:#e8e9f0;--muted:#9ca3af}}
@@ -12,6 +13,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .app{max-width:480px;margin:0 auto;padding:12px 12px 80px}
 .header{background:var(--navy);color:#fff;border-radius:var(--r);padding:18px 16px;margin-bottom:12px;text-align:center}
 .header h1{font-size:19px;font-weight:600}.header p{font-size:11px;opacity:.6;margin-top:3px}
+.sync-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;opacity:.7;margin-top:6px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:#4ade80}
+.sync-dot.syncing{background:#fbbf24;animation:pulse 1s infinite}
+.sync-dot.error{background:#f87171}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .tab-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100}
 .tab-btn{flex:1;padding:10px 4px 14px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);font-size:10px;font-weight:500}
 .tab-btn.active{color:var(--navy)}.tab-btn svg{width:22px;height:22px}
@@ -21,8 +27,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .card-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
 select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;background:var(--surface);color:var(--text);margin-bottom:10px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
 textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;background:var(--surface);color:var(--text);resize:vertical;min-height:80px;font-family:inherit}
+input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;background:var(--surface);color:var(--text);margin-bottom:8px}
 .btn{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;margin-top:8px}
 .btn:active{opacity:.85}
+.btn-sm{padding:8px 14px;font-size:13px;width:auto;margin-top:0}
+.btn-outline{background:none;border:1.5px solid var(--border);color:var(--text)}
 .badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
 .b-green{background:var(--green-bg);color:var(--green-txt)}.b-amber{background:var(--amber-bg);color:var(--amber-txt)}.b-blue{background:var(--blue-bg);color:var(--blue-txt)}.b-red{background:var(--red-bg);color:var(--red-txt)}
 .day-pill{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;margin-right:5px}
@@ -55,19 +64,36 @@ textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radi
 .prev-note-date{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
 .prev-note-text{font-size:13px;line-height:1.5}
 .del-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:2px 6px;float:right}
+/* Hub / comms styles */
+.msg-bubble{background:var(--surface2);border-radius:var(--rs);padding:10px 12px;margin-bottom:8px}
+.msg-meta{font-size:11px;color:var(--muted);margin-bottom:4px;display:flex;justify-content:space-between}
+.msg-author{font-weight:600;color:var(--text)}
+.msg-text{font-size:14px;line-height:1.5}
+.msg-input-row{display:flex;gap:8px;margin-top:8px}
+.msg-input-row input{flex:1;margin-bottom:0}
+.coach-tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;background:var(--blue-bg);color:var(--blue-txt);font-weight:600;margin-right:4px}
+.loading{text-align:center;color:var(--muted);font-size:13px;padding:20px}
+.name-prompt{background:var(--amber-bg);border:1px solid var(--amber-txt);border-radius:var(--rs);padding:12px;margin-bottom:12px}
+.name-prompt p{font-size:13px;color:var(--amber-txt);margin-bottom:8px;font-weight:500}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="header"><h1>Shearers Under 12 White</h1><p>Coaching Hub · Season 2026</p></div>
+  <div class="header">
+    <h1>Shearers Under 12 White</h1>
+    <p>Coaching Hub · Season 2026</p>
+    <div class="sync-badge"><div class="sync-dot" id="syncDot"></div><span id="syncLabel">Connecting…</span></div>
+  </div>
 
+  <!-- SQUAD -->
   <div id="sec-squad" class="section active">
     <div class="card"><div class="card-title">Full squad</div><div id="squadList"></div></div>
   </div>
 
+  <!-- LINEUP -->
   <div id="sec-lineup" class="section">
     <div class="card"><div class="card-title">Select game date</div>
-      <select id="lineupDate" onchange="renderLineup()">
+      <select id="lineupDate" onchange="loadLineup()">
         <option value="Apr18">Sat 18 Apr</option><option value="Apr25">Sat 25 Apr</option>
         <option value="May2">Sat 2 May</option><option value="May9">Sat 9 May</option>
         <option value="May16">Sat 16 May</option><option value="May23">Sat 23 May</option>
@@ -83,9 +109,10 @@ textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radi
     <button class="btn" onclick="saveLineup()">Save lineup</button>
   </div>
 
+  <!-- TRAINING -->
   <div id="sec-training" class="section">
     <div class="card"><div class="card-title">Select training session</div>
-      <select id="trainDate" onchange="renderTrainAttendance()">
+      <select id="trainDate" onchange="loadTrainAttendance()">
         <optgroup label="April"><option>Thu 17 Apr</option><option>Tue 22 Apr</option><option>Thu 24 Apr</option><option>Tue 29 Apr</option></optgroup>
         <optgroup label="May"><option>Thu 1 May</option><option>Tue 6 May</option><option>Thu 8 May</option><option>Tue 13 May</option><option>Thu 15 May</option><option>Tue 20 May</option><option>Thu 22 May</option><option>Tue 27 May</option><option>Thu 29 May</option></optgroup>
         <optgroup label="June"><option>Tue 3 Jun</option><option>Thu 5 Jun</option><option>Tue 10 Jun</option><option>Thu 12 Jun</option><option>Tue 17 Jun</option><option>Thu 19 Jun</option><option>Tue 24 Jun</option><option>Thu 26 Jun</option></optgroup>
@@ -97,7 +124,7 @@ textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radi
       <div class="sum-tile"><div class="big" id="tCntA" style="color:var(--red-txt)">0</div><div class="lbl">Absent</div></div>
       <div class="sum-tile"><div class="big" id="tCntU" style="color:var(--muted)">18</div><div class="lbl">Unknown</div></div>
     </div>
-    <div class="card"><div class="card-title">Mark attendance</div><div id="trainPlayerList"></div></div>
+    <div class="card"><div class="card-title">Mark attendance</div><div id="trainPlayerList"><div class="loading">Loading…</div></div></div>
     <div class="card">
       <div class="card-title">Session notes</div>
       <textarea id="sessionNote" placeholder="Drills covered, focus areas, things to work on..."></textarea>
@@ -106,6 +133,7 @@ textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radi
     <div class="card" id="prevNotesCard" style="display:none"><div class="card-title">Saved notes</div><div id="prevNotes"></div></div>
   </div>
 
+  <!-- REPORT -->
   <div id="sec-report" class="section">
     <div class="card"><div class="card-title">Training attendance report</div><div id="reportSummary"></div></div>
     <div id="reportPlayers"></div>
@@ -117,9 +145,25 @@ textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radi
     </div>
   </div>
 
-  <div id="sec-rules" class="section">
+  <!-- COACHING HUB -->
+  <div id="sec-hub" class="section">
+    <div id="namePromptBox" class="name-prompt" style="display:none">
+      <p>👋 What's your name? (So others know who posted)</p>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="coachNameInput" placeholder="e.g. Dave" style="margin-bottom:0;flex:1">
+        <button class="btn btn-sm" onclick="saveCoachName()">Save</button>
+      </div>
+    </div>
     <div class="card">
-      <div class="card-title">Under 12s — game rules</div>
+      <div class="card-title">Coaching team discussion</div>
+      <div id="hubMessages"><div class="loading">Loading messages…</div></div>
+      <div class="msg-input-row">
+        <input type="text" id="hubMessageInput" placeholder="Add a note or question…" onkeydown="if(event.key==='Enter')postHubMessage()">
+        <button class="btn btn-sm" onclick="postHubMessage()">Post</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Rules</div>
       <div class="rule-grid">
         <div class="rule-item"><div class="rule-icon">⏱</div><div class="rule-lbl">Game time</div><div class="rule-val">20 min × 2</div></div>
         <div class="rule-item"><div class="rule-icon">👕</div><div class="rule-lbl">Players per team</div><div class="rule-val">13</div></div>
@@ -150,13 +194,27 @@ textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radi
   <button class="tab-btn" onclick="showTab('report',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Report
   </button>
-  <button class="tab-btn" onclick="showTab('rules',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Rules
+  <button class="tab-btn" onclick="showTab('hub',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Hub
   </button>
 </nav>
 <div class="toast" id="toast"></div>
 
 <script>
+// ── Supabase setup ──────────────────────────────────────────────
+const SUPABASE_URL = 'https://lwxcjskneuemcfwtdcsz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3eGNqc2tuZXVlbWNmd3RkY3N6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1Njg3MzIsImV4cCI6MjA5MzE0NDczMn0.QGm9vDBrImewu8j__BHn8prfUHHwrR2p6bHVaA1IPNs';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── Sync indicator ──────────────────────────────────────────────
+function setSyncState(state) {
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  dot.className = 'sync-dot' + (state === 'syncing' ? ' syncing' : state === 'error' ? ' error' : '');
+  lbl.textContent = state === 'syncing' ? 'Syncing…' : state === 'error' ? 'Offline' : 'Live';
+}
+
+// ── Player data ─────────────────────────────────────────────────
 const PLAYERS=[
   {num:1,name:"Heath",pos:"Fullback",pref1:"Fullback",pref2:"Five Eight",type:"starter"},
   {num:2,name:"Max",pos:"Wing",pref1:"Wing",pref2:"Centre",type:"starter"},
@@ -180,25 +238,256 @@ const PLAYERS=[
 const STARTER_SLOTS=[{num:1,pos:"Fullback"},{num:2,pos:"Wing"},{num:3,pos:"Centre"},{num:4,pos:"Centre"},{num:5,pos:"Wing"},{num:6,pos:"Five Eight"},{num:7,pos:"Half Back"},{num:8,pos:"Front Row"},{num:9,pos:"Dummy Half"},{num:10,pos:"Front Row"},{num:11,pos:"Second Row"},{num:12,pos:"Second Row"},{num:13,pos:"Lock"}];
 const RESERVE_SLOTS=[{num:14,pos:"Reserve Middle"},{num:15,pos:"Reserve Middle"},{num:16,pos:"Reserve Spine/Back"},{num:17,pos:"Reserve Outside Back"},{num:18,pos:"Injured / Out"}];
 const TRAIN_SESSIONS=["Thu 17 Apr","Tue 22 Apr","Thu 24 Apr","Tue 29 Apr","Thu 1 May","Tue 6 May","Thu 8 May","Tue 13 May","Thu 15 May","Tue 20 May","Thu 22 May","Tue 27 May","Thu 29 May","Tue 3 Jun","Thu 5 Jun","Tue 10 Jun","Thu 12 Jun","Tue 17 Jun","Thu 19 Jun","Tue 24 Jun","Thu 26 Jun","Tue 1 Jul","Thu 3 Jul","Tue 8 Jul","Thu 10 Jul","Tue 15 Jul","Thu 17 Jul","Tue 22 Jul","Thu 24 Jul"];
-const LS={get:(k)=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
-let trainAtt=LS.get('u12_trainAtt')||{};
-let lineups=LS.get('u12_lineups')||{};
-let notes=LS.get('u12_notes')||{};
-function persist(){LS.set('u12_trainAtt',trainAtt);LS.set('u12_lineups',lineups);LS.set('u12_notes',notes);}
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
-function showTab(name,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('sec-'+name).classList.add('active');btn.classList.add('active');window.scrollTo(0,0);if(name==='lineup')renderLineup();if(name==='training'){renderTrainAttendance();renderPrevNotes();}if(name==='report')renderReport();}
-function renderSquad(){document.getElementById('squadList').innerHTML=PLAYERS.map(p=>{const sub=p.pref1?'Prefers: '+p.pref1+(p.pref2?' / '+p.pref2:''):'';const bc=p.type==='reserve'?'b-amber':p.type==='injured'?'b-red':'b-blue';return`<div class="player-row"><div class="num">${p.num}</div><div class="player-info"><div class="player-name">${p.name}</div>${sub?`<div class="player-sub">${sub}</div>`:''}</div><span class="badge ${bc}" style="font-size:10px">${p.pos}</span></div>`;}).join('');}
-function getLineupKey(){return document.getElementById('lineupDate').value;}
-function renderLineup(){const dk=getLineupKey();const saved=lineups[dk]||{};document.getElementById('lineupStarters').innerHTML=STARTER_SLOTS.map(slot=>{const cur=saved[slot.num]||'';const opts=PLAYERS.map(p=>`<option value="${p.name}"${p.name===cur?' selected':''}>${p.name}</option>`).join('');return`<div class="lp-row"><span class="num" style="flex-shrink:0">${slot.num}</span><span class="lp-pos">${slot.pos}</span><select class="lp-select" data-slot="${slot.num}"><option value="">— pick —</option>${opts}</select></div>`;}).join('');document.getElementById('lineupReserves').innerHTML=RESERVE_SLOTS.map(slot=>{const cur=saved[slot.num]||'';const opts=PLAYERS.map(p=>`<option value="${p.name}"${p.name===cur?' selected':''}>${p.name}</option>`).join('');return`<div class="lp-row"><span class="num" style="flex-shrink:0;background:${slot.num===18?'#A32D2D':'#854F0B'}">${slot.num}</span><span class="lp-pos">${slot.pos}</span><select class="lp-select" data-slot="${slot.num}"><option value="">— pick —</option>${opts}</select></div>`;}).join('');}
-function saveLineup(){const dk=getLineupKey();lineups[dk]={};document.querySelectorAll('.lp-select').forEach(sel=>{if(sel.value)lineups[dk][sel.dataset.slot]=sel.value;});persist();showToast('Lineup saved ✓');}
-function getTrainKey(){return document.getElementById('trainDate').value;}
-function renderTrainAttendance(){const dk=getTrainKey();if(!trainAtt[dk])trainAtt[dk]={};const d=trainAtt[dk];let p=0,a=0,u=0;PLAYERS.forEach(pl=>{const s=d[pl.name]||'none';if(s==='present')p++;else if(s==='absent')a++;else u++;});document.getElementById('tCntP').textContent=p;document.getElementById('tCntA').textContent=a;document.getElementById('tCntU').textContent=u;document.getElementById('trainPlayerList').innerHTML=PLAYERS.map(pl=>{const s=d[pl.name]||'none';const cls=s==='present'?'present':s==='absent'?'absent':'';const icon=s==='present'?'✓':s==='absent'?'✗':'·';const bc=pl.type==='reserve'?'b-amber':pl.type==='injured'?'b-red':'b-blue';return`<div class="player-row"><div class="num">${pl.num}</div><div class="player-info"><div class="player-name">${pl.name}</div><div class="player-sub">${pl.pos}</div></div><span class="badge ${bc}" style="font-size:10px">${pl.pos}</span><button class="att-btn ${cls}" onclick="toggleTrainAtt('${pl.name}')">${icon}</button></div>`;}).join('');const saved=notes[dk];document.getElementById('sessionNote').value=saved?saved.text:'';}
-function toggleTrainAtt(name){const dk=getTrainKey();if(!trainAtt[dk])trainAtt[dk]={};const cur=trainAtt[dk][name]||'none';trainAtt[dk][name]=cur==='none'?'present':cur==='present'?'absent':'none';persist();renderTrainAttendance();}
-function saveNote(){const date=getTrainKey();const text=document.getElementById('sessionNote').value.trim();if(!text){showToast('Nothing to save');return;}notes[date]={text,ts:new Date().toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})};persist();renderPrevNotes();showToast('Notes saved ✓');}
-function deleteNote(date){delete notes[date];persist();renderPrevNotes();}
-function renderPrevNotes(){const keys=Object.keys(notes);const card=document.getElementById('prevNotesCard');if(!keys.length){card.style.display='none';return;}card.style.display='block';document.getElementById('prevNotes').innerHTML=keys.slice().reverse().map(k=>{const isTue=k.startsWith('Tue');const pill=`<span class="day-pill ${isTue?'tue':'thu'}">${isTue?'Tue':'Thu'}</span>`;return`<div class="prev-note"><div class="prev-note-date">${pill}${k.replace(/^(Tue|Thu) /,'')}<button class="del-btn" onclick="deleteNote('${k}')">×</button></div><div class="prev-note-text">${notes[k].text}</div></div>`;}).join('');}
-function renderReport(){const sessionsWithData=TRAIN_SESSIONS.filter(s=>trainAtt[s]&&Object.keys(trainAtt[s]).length>0);const total=sessionsWithData.length;document.getElementById('reportSummary').innerHTML=total===0?`<p style="color:var(--muted);font-size:13px">No sessions recorded yet. Mark attendance in the Training tab first.</p>`:`<div class="stat-row"><span class="stat-lbl">Sessions recorded</span><span style="font-weight:600">${total} of ${TRAIN_SESSIONS.length}</span></div><div class="stat-row"><span class="stat-lbl">Total sessions in season</span><span style="font-weight:600">${TRAIN_SESSIONS.length}</span></div>`;if(total===0){document.getElementById('reportPlayers').innerHTML='';return;}const stats=PLAYERS.map(pl=>{let present=0,absent=0,unknown=0;sessionsWithData.forEach(s=>{const v=(trainAtt[s]||{})[pl.name]||'none';if(v==='present')present++;else if(v==='absent')absent++;else unknown++;});const pct=Math.round((present/total)*100);return{...pl,present,absent,unknown,pct};}).sort((a,b)=>b.pct-a.pct);document.getElementById('reportPlayers').innerHTML=`<div class="card" style="margin-bottom:10px"><div class="card-title">Player attendance — ${total} session${total!==1?'s':''}</div>${stats.map(p=>{const fc=p.pct>=75?'good':p.pct>=50?'ok':'low';const bc=p.type==='reserve'?'b-amber':p.type==='injured'?'b-red':'b-blue';return`<div class="report-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div class="report-name">${p.name} <span class="badge ${bc}" style="font-size:10px">${p.pos}</span></div><span style="font-size:16px;font-weight:700;color:${p.pct>=75?'var(--green-txt)':p.pct>=50?'var(--amber-txt)':'var(--red-txt)'}">${p.pct}%</span></div><div class="progress-bar"><div class="progress-fill ${fc}" style="width:${p.pct}%"></div></div><div class="report-stats"><span style="color:var(--green-txt)">✓ ${p.present} present</span><span style="color:var(--red-txt)">✗ ${p.absent} absent</span><span>· ${p.unknown} not marked</span></div></div>`;}).join('')}</div>`;}
-renderSquad();renderLineup();renderTrainAttendance();renderPrevNotes();
+
+// ── Coach name (local only) ─────────────────────────────────────
+function getCoachName() { return localStorage.getItem('coachName') || ''; }
+function saveCoachName() {
+  const n = document.getElementById('coachNameInput').value.trim();
+  if (!n) return;
+  localStorage.setItem('coachName', n);
+  document.getElementById('namePromptBox').style.display = 'none';
+  showToast('Name saved ✓');
+}
+
+// ── Toast ───────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── Tab navigation ──────────────────────────────────────────────
+function showTab(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'lineup') loadLineup();
+  if (name === 'training') { loadTrainAttendance(); loadPrevNotes(); }
+  if (name === 'report') loadReport();
+  if (name === 'hub') loadHub();
+}
+
+// ── Squad ───────────────────────────────────────────────────────
+function renderSquad() {
+  document.getElementById('squadList').innerHTML = PLAYERS.map(p => {
+    const sub = p.pref1 ? 'Prefers: ' + p.pref1 + (p.pref2 ? ' / ' + p.pref2 : '') : '';
+    const bc = p.type === 'reserve' ? 'b-amber' : p.type === 'injured' ? 'b-red' : 'b-blue';
+    return `<div class="player-row"><div class="num">${p.num}</div><div class="player-info"><div class="player-name">${p.name}</div>${sub ? `<div class="player-sub">${sub}</div>` : ''}</div><span class="badge ${bc}" style="font-size:10px">${p.pos}</span></div>`;
+  }).join('');
+}
+
+// ── Lineup ──────────────────────────────────────────────────────
+let currentLineup = {};
+async function loadLineup() {
+  const date = document.getElementById('lineupDate').value;
+  setSyncState('syncing');
+  const { data } = await sb.from('lineups').select('*').eq('game_date', date);
+  currentLineup = {};
+  (data || []).forEach(r => { currentLineup[r.slot] = r.player_name; });
+  setSyncState('live');
+  renderLineupUI();
+}
+function renderLineupUI() {
+  document.getElementById('lineupStarters').innerHTML = STARTER_SLOTS.map(slot => {
+    const cur = currentLineup[slot.num] || '';
+    const opts = PLAYERS.map(p => `<option value="${p.name}"${p.name === cur ? ' selected' : ''}>${p.name}</option>`).join('');
+    return `<div class="lp-row"><span class="num" style="flex-shrink:0">${slot.num}</span><span class="lp-pos">${slot.pos}</span><select class="lp-select" data-slot="${slot.num}"><option value="">— pick —</option>${opts}</select></div>`;
+  }).join('');
+  document.getElementById('lineupReserves').innerHTML = RESERVE_SLOTS.map(slot => {
+    const cur = currentLineup[slot.num] || '';
+    const opts = PLAYERS.map(p => `<option value="${p.name}"${p.name === cur ? ' selected' : ''}>${p.name}</option>`).join('');
+    return `<div class="lp-row"><span class="num" style="flex-shrink:0;background:${slot.num === 18 ? '#A32D2D' : '#854F0B'}">${slot.num}</span><span class="lp-pos">${slot.pos}</span><select class="lp-select" data-slot="${slot.num}"><option value="">— pick —</option>${opts}</select></div>`;
+  }).join('');
+}
+async function saveLineup() {
+  const date = document.getElementById('lineupDate').value;
+  setSyncState('syncing');
+  const rows = [];
+  document.querySelectorAll('.lp-select').forEach(sel => {
+    if (sel.value) rows.push({ game_date: date, slot: parseInt(sel.dataset.slot), player_name: sel.value });
+  });
+  await sb.from('lineups').delete().eq('game_date', date);
+  if (rows.length) await sb.from('lineups').insert(rows);
+  setSyncState('live');
+  showToast('Lineup saved ✓');
+}
+
+// ── Training attendance ─────────────────────────────────────────
+let trainAtt = {};
+async function loadTrainAttendance() {
+  const session = document.getElementById('trainDate').value;
+  setSyncState('syncing');
+  const { data } = await sb.from('attendance').select('*').eq('session', session);
+  trainAtt = {};
+  (data || []).forEach(r => { trainAtt[r.player_name] = r.status; });
+  setSyncState('live');
+  renderTrainUI();
+  loadSessionNote();
+}
+function renderTrainUI() {
+  let p = 0, a = 0, u = 0;
+  PLAYERS.forEach(pl => {
+    const s = trainAtt[pl.name] || 'none';
+    if (s === 'present') p++; else if (s === 'absent') a++; else u++;
+  });
+  document.getElementById('tCntP').textContent = p;
+  document.getElementById('tCntA').textContent = a;
+  document.getElementById('tCntU').textContent = u;
+  document.getElementById('trainPlayerList').innerHTML = PLAYERS.map(pl => {
+    const s = trainAtt[pl.name] || 'none';
+    const cls = s === 'present' ? 'present' : s === 'absent' ? 'absent' : '';
+    const icon = s === 'present' ? '✓' : s === 'absent' ? '✗' : '·';
+    const bc = pl.type === 'reserve' ? 'b-amber' : pl.type === 'injured' ? 'b-red' : 'b-blue';
+    return `<div class="player-row"><div class="num">${pl.num}</div><div class="player-info"><div class="player-name">${pl.name}</div><div class="player-sub">${pl.pos}</div></div><span class="badge ${bc}" style="font-size:10px">${pl.pos}</span><button class="att-btn ${cls}" onclick="toggleAtt('${pl.name}')">${icon}</button></div>`;
+  }).join('');
+}
+async function toggleAtt(name) {
+  const session = document.getElementById('trainDate').value;
+  const cur = trainAtt[name] || 'none';
+  const next = cur === 'none' ? 'present' : cur === 'present' ? 'absent' : 'none';
+  trainAtt[name] = next;
+  renderTrainUI();
+  setSyncState('syncing');
+  await sb.from('attendance').upsert({ session, player_name: name, status: next }, { onConflict: 'session,player_name' });
+  setSyncState('live');
+}
+
+// ── Session notes ───────────────────────────────────────────────
+async function loadSessionNote() {
+  const session = document.getElementById('trainDate').value;
+  const { data } = await sb.from('notes').select('*').eq('session', session).single();
+  document.getElementById('sessionNote').value = data ? data.note_text : '';
+}
+async function saveNote() {
+  const session = document.getElementById('trainDate').value;
+  const text = document.getElementById('sessionNote').value.trim();
+  if (!text) { showToast('Nothing to save'); return; }
+  setSyncState('syncing');
+  await sb.from('notes').upsert({ session, note_text: text }, { onConflict: 'session' });
+  setSyncState('live');
+  loadPrevNotes();
+  showToast('Notes saved ✓');
+}
+async function loadPrevNotes() {
+  const { data } = await sb.from('notes').select('*').order('updated_at', { ascending: false });
+  const card = document.getElementById('prevNotesCard');
+  if (!data || !data.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  document.getElementById('prevNotes').innerHTML = data.map(n => {
+    const isTue = n.session.startsWith('Tue');
+    const pill = `<span class="day-pill ${isTue ? 'tue' : 'thu'}">${isTue ? 'Tue' : 'Thu'}</span>`;
+    return `<div class="prev-note"><div class="prev-note-date">${pill}${n.session.replace(/^(Tue|Thu) /, '')}<button class="del-btn" onclick="deleteNote('${n.session}')">×</button></div><div class="prev-note-text">${n.note_text}</div></div>`;
+  }).join('');
+}
+async function deleteNote(session) {
+  setSyncState('syncing');
+  await sb.from('notes').delete().eq('session', session);
+  setSyncState('live');
+  loadPrevNotes();
+}
+
+// ── Report ──────────────────────────────────────────────────────
+async function loadReport() {
+  setSyncState('syncing');
+  const { data } = await sb.from('attendance').select('*');
+  setSyncState('live');
+  const bySession = {};
+  (data || []).forEach(r => {
+    if (!bySession[r.session]) bySession[r.session] = {};
+    bySession[r.session][r.player_name] = r.status;
+  });
+  const sessionsWithData = TRAIN_SESSIONS.filter(s => bySession[s] && Object.keys(bySession[s]).length > 0);
+  const total = sessionsWithData.length;
+  document.getElementById('reportSummary').innerHTML = total === 0
+    ? `<p style="color:var(--muted);font-size:13px">No sessions recorded yet.</p>`
+    : `<div class="stat-row"><span class="stat-lbl">Sessions recorded</span><span style="font-weight:600">${total} of ${TRAIN_SESSIONS.length}</span></div>`;
+  if (!total) { document.getElementById('reportPlayers').innerHTML = ''; return; }
+  const stats = PLAYERS.map(pl => {
+    let present = 0, absent = 0, unknown = 0;
+    sessionsWithData.forEach(s => {
+      const v = (bySession[s] || {})[pl.name] || 'none';
+      if (v === 'present') present++; else if (v === 'absent') absent++; else unknown++;
+    });
+    const pct = Math.round((present / total) * 100);
+    return { ...pl, present, absent, unknown, pct };
+  }).sort((a, b) => b.pct - a.pct);
+  document.getElementById('reportPlayers').innerHTML = `<div class="card" style="margin-bottom:10px"><div class="card-title">Player attendance — ${total} session${total !== 1 ? 's' : ''}</div>${stats.map(p => {
+    const fc = p.pct >= 75 ? 'good' : p.pct >= 50 ? 'ok' : 'low';
+    const bc = p.type === 'reserve' ? 'b-amber' : p.type === 'injured' ? 'b-red' : 'b-blue';
+    return `<div class="report-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div class="report-name">${p.name} <span class="badge ${bc}" style="font-size:10px">${p.pos}</span></div><span style="font-size:16px;font-weight:700;color:${p.pct>=75?'var(--green-txt)':p.pct>=50?'var(--amber-txt)':'var(--red-txt)'}">${p.pct}%</span></div><div class="progress-bar"><div class="progress-fill ${fc}" style="width:${p.pct}%"></div></div><div class="report-stats"><span style="color:var(--green-txt)">✓ ${p.present} present</span><span style="color:var(--red-txt)">✗ ${p.absent} absent</span><span>· ${p.unknown} not marked</span></div></div>`;
+  }).join('')}</div>`;
+}
+
+// ── Hub / coaching discussion ───────────────────────────────────
+let hubChannel = null;
+async function loadHub() {
+  const name = getCoachName();
+  const prompt = document.getElementById('namePromptBox');
+  if (!name) {
+    prompt.style.display = 'block';
+    document.getElementById('coachNameInput').value = '';
+  } else {
+    prompt.style.display = 'none';
+  }
+  setSyncState('syncing');
+  const { data } = await sb.from('hub_messages').select('*').order('created_at', { ascending: true }).limit(50);
+  setSyncState('live');
+  renderHubMessages(data || []);
+  // Subscribe to real-time updates
+  if (hubChannel) sb.removeChannel(hubChannel);
+  hubChannel = sb.channel('hub').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'hub_messages' }, payload => {
+    appendHubMessage(payload.new);
+  }).subscribe();
+}
+function renderHubMessages(messages) {
+  const el = document.getElementById('hubMessages');
+  if (!messages.length) { el.innerHTML = '<div class="loading">No messages yet — say something 👋</div>'; return; }
+  el.innerHTML = messages.map(m => hubMsgHtml(m)).join('');
+  el.scrollTop = el.scrollHeight;
+}
+function appendHubMessage(m) {
+  const el = document.getElementById('hubMessages');
+  const empty = el.querySelector('.loading');
+  if (empty) el.innerHTML = '';
+  el.insertAdjacentHTML('beforeend', hubMsgHtml(m));
+  el.scrollTop = el.scrollHeight;
+}
+function hubMsgHtml(m) {
+  const d = new Date(m.created_at);
+  const time = d.toLocaleString('en-AU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return `<div class="msg-bubble"><div class="msg-meta"><span class="msg-author">${m.coach_name}</span><span>${time}</span></div><div class="msg-text">${m.message}</div></div>`;
+}
+async function postHubMessage() {
+  let name = getCoachName();
+  if (!name) {
+    name = document.getElementById('coachNameInput').value.trim();
+    if (!name) { showToast('Enter your name first'); return; }
+    localStorage.setItem('coachName', name);
+    document.getElementById('namePromptBox').style.display = 'none';
+  }
+  const input = document.getElementById('hubMessageInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  setSyncState('syncing');
+  await sb.from('hub_messages').insert({ coach_name: name, message: msg });
+  setSyncState('live');
+}
+
+// ── Init ────────────────────────────────────────────────────────
+async function init() {
+  setSyncState('syncing');
+  // Test connection
+  const { error } = await sb.from('attendance').select('count').limit(1);
+  setSyncState(error ? 'error' : 'live');
+  renderSquad();
+  renderLineupUI();
+  loadTrainAttendance();
+}
+init();
 </script>
 </body>
 </html>
