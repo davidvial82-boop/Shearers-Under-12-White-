@@ -294,12 +294,10 @@ function renderSquad() {
   document.getElementById('squadList').innerHTML = PLAYERS.map(p => {
     const sub = p.pref1 ? 'Prefers: ' + p.pref1 + (p.pref2 ? ' / ' + p.pref2 : '') : '';
     const isUnavail = unavailablePlayers.has(p.name);
-    const bc = isUnavail ? 'b-red' : p.type === 'reserve' ? 'b-amber' : p.type === 'injured' ? 'b-red' : 'b-blue';
-    const label = isUnavail ? 'Injured/Away' : p.pos;
     return `<div class="player-row" style="${isUnavail ? 'opacity:0.5' : ''}">
       <div class="num">${p.num}</div>
       <div class="player-info"><div class="player-name">${p.name}</div>${sub ? `<div class="player-sub">${sub}</div>` : ''}</div>
-      <span class="badge ${bc}" style="font-size:10px">${label}</span>
+      ${isUnavail ? `<span class="badge b-red" style="font-size:10px">Unavailable</span>` : ''}
       <button class="unavail-btn ${isUnavail ? 'active' : ''}" onclick="toggleUnavailable('${p.name}')">${isUnavail ? '✗ Out' : 'Available'}</button>
     </div>`;
   }).join('');
