@@ -807,45 +807,47 @@ async function loadDev() {
 }
 
 function renderDev() {
-  const rows = PLAYERS.map(p => {
+  document.getElementById('devPlayerList').innerHTML = PLAYERS.map(p => {
     const isOpen = openDevPlayer === p.name;
     const obs = (devNotes[p.name]||[]).filter(n=>n.note_type==='observation');
     const goals = (devNotes[p.name]||[]).filter(n=>n.note_type==='goal');
     const total = obs.length + goals.length;
     const safeId = p.name.replace(/ /g,'-');
+    const pName = p.name.replace(/'/g,"\\'");
 
     const obsHtml = obs.length
-      ? obs.map(n=>'<div class="dev-note">'+n.note_text+'<div class="dev-note-meta">'+n.coach_name+' &middot; '+new Date(n.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})+'</div></div>').join('')
+      ? obs.map(n=>`<div class="dev-note">${n.note_text}<div class="dev-note-meta">${n.coach_name} &middot; ${new Date(n.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</div></div>`).join('')
       : '<div class="dev-empty">No observations yet</div>';
 
     const goalHtml = goals.length
-      ? goals.map(n=>'<div class="dev-note goal">'+n.note_text+'<div class="dev-note-meta">'+n.coach_name+' &middot; '+new Date(n.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})+'</div></div>').join('')
+      ? goals.map(n=>`<div class="dev-note goal">${n.note_text}<div class="dev-note-meta">${n.coach_name} &middot; ${new Date(n.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</div></div>`).join('')
       : '<div class="dev-empty">No goals set yet</div>';
 
-    return '<div class="dev-player-block">'
-      +'<div class="dev-player-header" onclick="toggleDevPlayer(''+p.name+'')">'
-      +'<div class="num">'+p.num+'</div>'
-      +'<div class="player-info"><div class="player-name">'+p.name+'</div>'
-      +'<div class="player-sub">'+(total>0?total+' note'+(total!==1?'s':'')+' recorded':'No notes yet')+'</div></div>'
-      +'<span style="color:var(--muted);font-size:14px;flex-shrink:0">'+(isOpen?'▲':'▼')+'</span>'
-      +'</div>'
-      +'<div class="dev-player-body '+(isOpen?'open':'')+'" id="dev-body-'+safeId+'">'
-      +'<div class="dev-section-label">📋 Observations</div>'
-      +obsHtml
-      +'<div class="dev-add-row">'
-      +'<input class="dev-add-input" id="obs-'+safeId+'" placeholder="Add observation…">'
-      +'<button class="dev-add-btn" onclick="addDevNote(''+p.name+'','observation','obs-'+safeId+'')">Add</button>'
-      +'</div>'
-      +'<div class="dev-section-label goal-label">🎯 Season Goals</div>'
-      +goalHtml
-      +'<div class="dev-add-row">'
-      +'<input class="dev-add-input" id="goal-'+safeId+'" placeholder="Add season goal…">'
-      +'<button class="dev-add-btn goal-btn" onclick="addDevNote(''+p.name+'','goal','goal-'+safeId+'')">Add</button>'
-      +'</div>'
-      +'</div>'
-      +'</div>';
+    return `<div class="dev-player-block">
+      <div class="dev-player-header" onclick="toggleDevPlayer('${pName}')">
+        <div class="num">${p.num}</div>
+        <div class="player-info">
+          <div class="player-name">${p.name}</div>
+          <div class="player-sub">${total>0 ? total+' note'+(total!==1?'s':'')+' recorded' : 'No notes yet'}</div>
+        </div>
+        <span style="color:var(--muted);font-size:14px;flex-shrink:0">${isOpen?'▲':'▼'}</span>
+      </div>
+      <div class="dev-player-body ${isOpen?'open':''}" id="dev-body-${safeId}">
+        <div class="dev-section-label">📋 Observations</div>
+        ${obsHtml}
+        <div class="dev-add-row">
+          <input class="dev-add-input" id="obs-${safeId}" placeholder="Add observation…">
+          <button class="dev-add-btn" onclick="addDevNote('${pName}','observation','obs-${safeId}')">Add</button>
+        </div>
+        <div class="dev-section-label goal-label">🎯 Season Goals</div>
+        ${goalHtml}
+        <div class="dev-add-row">
+          <input class="dev-add-input" id="goal-${safeId}" placeholder="Add season goal…">
+          <button class="dev-add-btn goal-btn" onclick="addDevNote('${pName}','goal','goal-${safeId}')">Add</button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
-  document.getElementById('devPlayerList').innerHTML = rows;
 }
 
 function toggleDevPlayer(name) {
