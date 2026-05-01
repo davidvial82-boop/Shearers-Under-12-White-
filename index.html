@@ -66,7 +66,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
 .tab-btn{
   flex:1;padding:10px 4px 14px;border:none;background:none;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;gap:3px;
-  color:var(--muted);font-size:9px;font-weight:600;
+  color:var(--muted);font-size:8px;font-weight:600;
   font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;text-transform:uppercase
 }
 .tab-btn.active{color:var(--navy);border-top:2px solid var(--maroon);margin-top:-2px}.tab-btn svg{width:22px;height:22px}
@@ -209,6 +209,23 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy)}
 .report-stats{display:flex;gap:8px;font-size:12px;color:var(--muted)}
 
 /* ── TOAST ── */
+.dev-player-block{margin-bottom:8px;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;box-shadow:0 1px 4px rgba(13,37,69,0.06)}
+.dev-player-header{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);cursor:pointer;transition:background .1s}
+.dev-player-header:active{background:var(--surface2)}
+.dev-player-body{display:none;padding:12px;background:var(--surface2);border-top:1px solid var(--border)}
+.dev-player-body.open{display:block}
+.dev-section-label{font-family:"Barlow Condensed",sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;margin-top:12px;color:var(--navy)}
+.dev-section-label:first-child{margin-top:0}
+.dev-section-label.goal-label{color:var(--maroon)}
+.dev-note{background:var(--surface);border-radius:6px;padding:8px 10px;margin-bottom:6px;border-left:3px solid var(--navy);font-size:13px;line-height:1.4}
+.dev-note.goal{border-left-color:var(--gold)}
+.dev-note-meta{font-size:10px;color:var(--muted);margin-top:3px;font-weight:500}
+.dev-add-row{display:flex;gap:6px;margin-top:8px}
+.dev-add-input{flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:13px;background:var(--surface);color:var(--text);font-family:"Barlow",sans-serif}
+.dev-add-input:focus{outline:none;border-color:var(--navy)}
+.dev-add-btn{padding:7px 12px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:"Barlow Condensed",sans-serif;white-space:nowrap}
+.dev-add-btn.goal-btn{background:var(--maroon)}
+.dev-empty{font-size:12px;color:var(--muted);font-style:italic;padding:4px 0}
 .toast{
   position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
   background:var(--navy);color:#fff;padding:10px 20px;border-radius:20px;
@@ -336,11 +353,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy)}
   <div id="sec-report" class="section">
     <div class="card"><div class="card-title">Training attendance report</div><div id="reportSummary"></div></div>
     <div id="reportPlayers"></div>
+
+  </div>
+
+  <!-- DEVELOPMENT -->
+  <div id="sec-dev" class="section">
     <div class="card">
-      <div class="card-title">Player development flags</div>
-      <div class="stat-row"><span class="stat-lbl">SJ</span><span class="badge b-red">Injured — monitor return</span></div>
-      <div class="stat-row"><span class="stat-lbl">Carter</span><span class="badge b-amber">Position needs clarifying</span></div>
-      <div class="stat-row"><span class="stat-lbl">Ryaln</span><span class="badge b-amber">Position needs clarifying</span></div>
+      <div class="card-title">Player Development</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Tap a player to add observations or season goals.</p>
+      <div id="devPlayerList"></div>
     </div>
   </div>
 
@@ -407,6 +428,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy)}
   </button>
   <button class="tab-btn" onclick="showTab('report',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Report
+  </button>
+  <button class="tab-btn" onclick="showTab('dev',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>Develop
   </button>
   <button class="tab-btn" onclick="showTab('hub',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Hub
@@ -485,6 +509,7 @@ function showTab(name, btn) {
   if (name==='lineup') loadLineup();
   if (name==='training') { loadTrainAttendance(); loadPrevNotes(); }
   if (name==='report') loadReport();
+  if (name==='dev') loadDev();
   if (name==='hub') loadHub();
 }
 
@@ -763,6 +788,89 @@ async function postHubMessage() {
   setSyncState('syncing');
   await sb.from('hub_messages').insert({coach_name:name,message:msg,channel:currentChannel});
   setSyncState('live');
+}
+
+// ── Development ──────────────────────────────────────────────────
+let devNotes = {};
+let openDevPlayer = null;
+
+async function loadDev() {
+  setSyncState('syncing');
+  const {data} = await sb.from('player_notes').select('*').order('created_at',{ascending:false});
+  setSyncState('live');
+  devNotes = {};
+  (data||[]).forEach(r => {
+    if (!devNotes[r.player_name]) devNotes[r.player_name] = [];
+    devNotes[r.player_name].push(r);
+  });
+  renderDev();
+}
+
+function renderDev() {
+  const rows = PLAYERS.map(p => {
+    const isOpen = openDevPlayer === p.name;
+    const obs = (devNotes[p.name]||[]).filter(n=>n.note_type==='observation');
+    const goals = (devNotes[p.name]||[]).filter(n=>n.note_type==='goal');
+    const total = obs.length + goals.length;
+    const safeId = p.name.replace(/ /g,'-');
+
+    const obsHtml = obs.length
+      ? obs.map(n=>'<div class="dev-note">'+n.note_text+'<div class="dev-note-meta">'+n.coach_name+' &middot; '+new Date(n.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})+'</div></div>').join('')
+      : '<div class="dev-empty">No observations yet</div>';
+
+    const goalHtml = goals.length
+      ? goals.map(n=>'<div class="dev-note goal">'+n.note_text+'<div class="dev-note-meta">'+n.coach_name+' &middot; '+new Date(n.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})+'</div></div>').join('')
+      : '<div class="dev-empty">No goals set yet</div>';
+
+    return '<div class="dev-player-block">'
+      +'<div class="dev-player-header" onclick="toggleDevPlayer(''+p.name+'')">'
+      +'<div class="num">'+p.num+'</div>'
+      +'<div class="player-info"><div class="player-name">'+p.name+'</div>'
+      +'<div class="player-sub">'+(total>0?total+' note'+(total!==1?'s':'')+' recorded':'No notes yet')+'</div></div>'
+      +'<span style="color:var(--muted);font-size:14px;flex-shrink:0">'+(isOpen?'▲':'▼')+'</span>'
+      +'</div>'
+      +'<div class="dev-player-body '+(isOpen?'open':'')+'" id="dev-body-'+safeId+'">'
+      +'<div class="dev-section-label">📋 Observations</div>'
+      +obsHtml
+      +'<div class="dev-add-row">'
+      +'<input class="dev-add-input" id="obs-'+safeId+'" placeholder="Add observation…">'
+      +'<button class="dev-add-btn" onclick="addDevNote(''+p.name+'','observation','obs-'+safeId+'')">Add</button>'
+      +'</div>'
+      +'<div class="dev-section-label goal-label">🎯 Season Goals</div>'
+      +goalHtml
+      +'<div class="dev-add-row">'
+      +'<input class="dev-add-input" id="goal-'+safeId+'" placeholder="Add season goal…">'
+      +'<button class="dev-add-btn goal-btn" onclick="addDevNote(''+p.name+'','goal','goal-'+safeId+'')">Add</button>'
+      +'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('devPlayerList').innerHTML = rows;
+}
+
+function toggleDevPlayer(name) {
+  openDevPlayer = openDevPlayer===name ? null : name;
+  renderDev();
+}
+
+async function addDevNote(playerName, type, inputId) {
+  const input = document.getElementById(inputId);
+  const text = input.value.trim();
+  if (!text) return;
+  const coach = getCoachName();
+  if (!coach) { showToast('Set your name in Hub first'); return; }
+  input.value = '';
+  setSyncState('syncing');
+  const {data} = await sb.from('player_notes').insert({
+    player_name: playerName, note_text: text, note_type: type, coach_name: coach
+  }).select().single();
+  setSyncState('live');
+  if (data) {
+    if (!devNotes[playerName]) devNotes[playerName] = [];
+    devNotes[playerName].unshift(data);
+    renderDev();
+    showToast(type==='observation' ? 'Observation added ✓' : 'Goal added ✓');
+  }
 }
 
 // ── Init ────────────────────────────────────────────────────────
